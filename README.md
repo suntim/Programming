@@ -1083,7 +1083,7 @@ if __name__ == '__main__':
     from IPython import embed; embed()
 '''
 
-10、lib/datasets/factory.py
+10、lib/datasets/factory.py 建立data/BambooDevkit2017/Bamboo2017/Annotations/
 '''
 # --------------------------------------------------------
 # Fast R-CNN
