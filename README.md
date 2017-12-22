@@ -1144,3 +1144,42 @@ def list_imdbs():
     return __sets.keys()
 
 '''
+11、解析xml
+'''
+# -*- coding: UTF-8 -*-
+#!/usr/bin/env python
+import xml.etree.ElementTree as ET
+import os
+import re
+COUNT = {"t-insulator":0,"b-insulator":0,"c-support":0,"ft-support":0,
+         "ff-tube":0,"ff-device":0,"connector":0,"bf-tube":0,
+         "bf-device":0,"i-line":0,"w-line":0}
+
+W_name = ["t-insulator","b-insulator","c-support","ft-support",
+          "ff-tube","ff-device","connector","bf-tube",
+          "bf-device","i-line","w-line"]
+
+with open('countXml.txt','w') as f:
+    xml_dir = 'C:/Users/xuting7/Downloads/railway测试图片'
+    for fileName in os.listdir(xml_dir):
+        if re.match(".*.xml",fileName):
+            # print("fileName = %s"%fileName)
+            xml_path = os.path.join(xml_dir,fileName)
+            #print(xml_path)
+            tree = ET.parse(xml_path)
+            root_name = tree.getroot()
+            #遍历xml文档
+            for childs in root_name:
+                # print "%s ---> %s"%(childs.tag,childs.attrib)
+                for chil in childs.iter('object'):
+                    for name in chil.iter('name'):
+                        for k in COUNT.keys():
+                            #print("k=%s,name=%s"%(k,name.text))
+                            if k == name.text:
+                                COUNT[k] += 1
+
+    for W_item in W_name:
+        f.writelines("%s = %s \n"%(W_item,COUNT[W_item]))
+
+print("Done!")
+'''
