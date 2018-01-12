@@ -4,9 +4,9 @@ import os
 import re
 import shutil
 
-img_dir = unicode(r'C:\Users\xuting7\Desktop\TRAIN','utf-8')
-xml_dir = unicode(r"C:\Users\xuting7\Desktop\label",'utf-8')
-save_dir = unicode(r"C:\Users\xuting7\Desktop\TRAIN",'utf-8')
+img_dir = unicode(r'C:\Users\x\Desktop\TRAIN','utf-8')
+xml_dir = unicode(r"C:\Users\x\Desktop\label",'utf-8')
+save_dir = unicode(r"C:\Users\x\Desktop\TRAIN",'utf-8')
 
 for fileName in os.listdir(img_dir):
     if re.match(".*.jpg$",fileName):
