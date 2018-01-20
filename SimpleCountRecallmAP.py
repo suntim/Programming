@@ -70,7 +70,7 @@ def voc_ap(rec,prec):
 
 
 
-def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5):
+def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,confidence_Threshold=0.1):
     cachefile = os.path.join(cachedir,'annots.pkl')
     with open(image_set_file,'r') as f:
         lines = f.readlines()
@@ -103,7 +103,7 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5):
         difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
         det = [False]*len(R)
         npos = npos + sum(~difficult)#number of positive
-        print "len(R) = {}, npos = {}".format(len(R),npos)#number of positive
+        print "len(R) = {}, 实际GT个数npos = {}".format(len(R),npos)#number of positive
         class_recs[imagename] = {'bbox':bbox,'difficult':difficult,'det':det}
 
     # print "class_recs = {}".format(class_recs)
@@ -119,8 +119,12 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5):
 
     #sort by confidence
     sorted_ind = np.argsort(-confidence)#数组值从小到大的索引值,加“-”从大到小
-    # print "sorted_ind = {}".format(sorted_ind)
-    sorted_scores = np.sort(-confidence)
+    print "sorted_ind = {}".format(sorted_ind)
+    sorted_scores = -1*np.sort(-confidence)
+    print "sorted_scores = {}".format(sorted_scores)
+    print "sorted_ind [sorted_scores >= confidence_Threshold【{}】] : {}".format(confidence_Threshold,
+                                                                               sorted_ind[sorted_scores >= confidence_Threshold])
+    sorted_ind = sorted_ind[sorted_scores >= confidence_Threshold]
 
     if BB != []:
         BB = BB[sorted_ind,:]
@@ -128,7 +132,7 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5):
 
     #go down dets and mark TPs and FPs
     nd = len(image_ids)
-    print "nd = {}".format(nd)
+    print "Detect检测个数nd = {}".format(nd)
     tp = np.zeros(nd)#True Positive
     fp = np.zeros(nd)#False Positive误检的
     for d in range(nd):
@@ -212,12 +216,10 @@ if __name__ == '__main__':
             continue
         filename = _get_glass_results_file_template().format(cls)
         print "======================================cls = %s=============================================="%cls
-        rec,prec,fn,fp,ap = voc_eval(filename,annopath,image_set_file,cls,cachedir,ovthresh=0.1)
+        rec,prec,fn,fp,ap = voc_eval(filename,annopath,image_set_file,cls,cachedir,ovthresh=0.1,confidence_Threshold=0.2)
         aps += [ap]
         print "~~~~~{} : recall = {} prec = {} 漏检fn = {} 误检fp = {} AP = {}".format(cls,rec,prec,fn,fp,ap)
         with open((cls+'_precisionRecall.pkl'),'w') as f:
             cPickle.dump({'rec':rec,'prec':prec,'ap':ap},f)
     print ('Aps = {}'.format(aps))
     print ('Mean AP = {:.4f}'.format(np.mean(aps)))
-
-
