@@ -9,7 +9,7 @@ classses = ['__background__','breakage','crack','waterdrop','spot']
 num_classes = len(classses)
 
 def _get_glass_results_file_template():
-    filename = str('comp4_det_test'+'_{:s}.txt')
+    filename = str('comp4_43483b38-e75e-4cfd-9d9e-b4613cdda6b8_det_test'+'_{:s}.txt')
     path = os.path.join('Glass2017','Main',filename)
     return path
 
@@ -70,7 +70,7 @@ def voc_ap(rec,prec):
 
 
 
-def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,confidence_Threshold=0.1):
+def voc_eval(filename,annopath,image_set_file,classname,cachedir,use_repeated_fp = True,ovthresh=0.5,confidence_Threshold=0.1):
     cachefile = os.path.join(cachedir,'annots.pkl')
     with open(image_set_file,'r') as f:
         lines = f.readlines()
@@ -79,7 +79,7 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,co
         print "os.path.isfile(cachefile) == False"
         recs = {}
         for i,imagename in enumerate(imagenames):
-            print "annopath.format(imagename) = %s"%(annopath.format(imagename))
+            # print "annopath.format(imagename) = %s"%(annopath.format(imagename))
             recs[imagename] = parse_rec(annopath.format(imagename))
             if i%2 == 0:
                 print 'Reading annotation for {:d}/{:d}'.format(i+1,len(imagenames))
@@ -94,16 +94,16 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,co
     #extract gt objects for this class
     class_recs = {}
     npos = 0
-    print '**recs** = ',recs #gt
+    # print '**recs** = ',recs #gt
     for imagename in imagenames:
-        print 'imagename',imagename
+        # print 'imagename',imagename
         R = [obj for obj in recs[imagename] if obj['name'] == classname]#所有的一个类别，提取它的坐标
-        print "R = {}".format(R)
+        # print "R = {}".format(R)
         bbox = np.array([x['bbox'] for x in R])
         difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
         det = [False]*len(R)
         npos = npos + sum(~difficult)#number of positive
-        print "len(R) = {}, 实际GT个数npos = {}".format(len(R),npos)#number of positive
+        # print "len(R) = {}, 实际GT个数npos = {}".format(len(R),npos)#number of positive
         class_recs[imagename] = {'bbox':bbox,'difficult':difficult,'det':det}
 
     # print "class_recs = {}".format(class_recs)
@@ -119,11 +119,11 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,co
 
     #sort by confidence
     sorted_ind = np.argsort(-confidence)#数组值从小到大的索引值,加“-”从大到小
-    print "sorted_ind = {}".format(sorted_ind)
+    # print "sorted_ind = {}".format(sorted_ind)
     sorted_scores = -1*np.sort(-confidence)
-    print "sorted_scores = {}".format(sorted_scores)
-    print "sorted_ind [sorted_scores >= confidence_Threshold【{}】] : {}".format(confidence_Threshold,
-                                                                               sorted_ind[sorted_scores >= confidence_Threshold])
+    # print "sorted_scores = {}".format(sorted_scores)
+    # print "sorted_ind [sorted_scores >= confidence_Threshold【{}】] : {}".format(confidence_Threshold,
+    #                                                                            sorted_ind[sorted_scores >= confidence_Threshold])
     sorted_ind = sorted_ind[sorted_scores >= confidence_Threshold]
 
     if BB != []:
@@ -136,17 +136,17 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,co
     tp = np.zeros(nd)#True Positive
     fp = np.zeros(nd)#False Positive误检的
     for d in range(nd):
-        print "当前检测图片：【{}】".format(image_ids[d])
+        # print "当前检测图片：【{}】".format(image_ids[d])
         R = class_recs[image_ids[d]]
         bb = BB[d,:].astype(float)
-        print "bb = {}".format(bb)
+        # print "bb = {}".format(bb)
         ovmax = -np.inf
         BBGT = R['bbox'].astype(float)
 
         if BBGT.size > 0:
             #compute overlaps
             #intersection
-            print "BBGT[:] = {},GT number = {}".format(BBGT[:],len(BBGT[:,0]))
+            # print "BBGT[:] = {},GT number = {}".format(BBGT[:],len(BBGT[:,0]))
             ixmin = np.maximum(BBGT[:,0],bb[0])
             iymin = np.maximum(BBGT[:,1],bb[1])
             ixmax = np.minimum(BBGT[:,2],bb[2])
@@ -160,22 +160,22 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,co
                    (BBGT[:,2]-BBGT[:,0]+1.)*(BBGT[:,3]-BBGT[:,1]+1.)-
                    inters)
             overlaps = inters/uni
-            print ">>【overlaps】: {}".format(overlaps)
+            # print ">>【overlaps】: {}".format(overlaps)
             ovmax = np.max(overlaps)
-            print ">>ovmax:{}".format(ovmax)
+            # print ">>ovmax:{}".format(ovmax)
             jmax = np.argmax(overlaps)#索引值
-            print ">>jmax:{}".format(jmax)
+            # print ">>jmax:{}".format(jmax)
         if ovmax > ovthresh:
-            print "ovmax = %s"%ovmax
-            # print "R['difficult'][3]={}".format(R['difficult'][3])
+            # print "ovmax = %s"%ovmax
             if not R['difficult'][jmax]:#非难检
                 if not R['det'][jmax]:
                     tp[d] = 1.
                     R['det'][jmax] = 1
                 else:
                     print "重复检测！"
-                    fp[d] = 1.#重复检测
-            print "[R] = {}".format(R)
+                    if use_repeated_fp:
+                        fp[d] = 1.#重复检测
+            # print "[R] = {}".format(R)
         else:
             fp[d] = 1.
     #compute precision recall
@@ -201,9 +201,9 @@ def voc_eval(filename,annopath,image_set_file,classname,cachedir,ovthresh=0.5,co
 
 
 if __name__ == '__main__':
-    annopath = os.path.join(r'C:\Users\xuting7\Desktop\gt', '{}.xml')#GT Xml路径
-    print 'annopath = %s'%annopath
-    image_set_file = r'C:\Users\xuting7\Desktop\test.txt'#图片名字，不包含后缀名
+    annopath = os.path.join(r'C:\Users\xuting7\Downloads\MyPython\PlotLrFigure\PlotResult\oldTrainTest', '{}.xml')#GT Xml路径
+    # print 'annopath = %s'%annopath
+    image_set_file = r'C:\Users\xuting7\Downloads\MyPython\PlotLrFigure\PlotResult\ImageSets\Main\test.txt'#图片名字，不包含后缀名
     cachedir = os.path.join('Glass2017', 'annotations_cache')
     if not os.path.exists(cachedir):
         os.mkdir(cachedir)
@@ -216,10 +216,12 @@ if __name__ == '__main__':
             continue
         filename = _get_glass_results_file_template().format(cls)
         print "======================================cls = %s=============================================="%cls
-        rec,prec,fn,fp,ap = voc_eval(filename,annopath,image_set_file,cls,cachedir,ovthresh=0.1,confidence_Threshold=0.2)
+        rec,prec,fn,fp,ap = voc_eval(filename,annopath,image_set_file,cls,cachedir,use_repeated_fp=False,ovthresh=0.3,confidence_Threshold=0.1)
         aps += [ap]
-        print "~~~~~{} : recall = {} prec = {} 漏检fn = {} 误检fp = {} AP = {}".format(cls,rec,prec,fn,fp,ap)
-        with open((cls+'_precisionRecall.pkl'),'w') as f:
+        print "~~~~~{} : recall = {} prec = {} 漏检fn = {} 漏检率={} 误检fp = {} 误检率={} AP = {}".format(cls,rec,prec,fn,1-rec,fp,1-prec,ap)
+        if not os.path.exists('Glass2017/pkl'):
+            os.mkdir('Glass2017/pkl')
+        with open(os.path.join('Glass2017', 'pkl',(cls+'_precisionRecall.pkl')),'w') as f:
             cPickle.dump({'rec':rec,'prec':prec,'ap':ap},f)
     print ('Aps = {}'.format(aps))
     print ('Mean AP = {:.4f}'.format(np.mean(aps)))
