@@ -42,7 +42,7 @@ def object_info(data, objName, x1, y1, x2, y2,x3,y3,x4,y4):
     object_name = etree.SubElement(object, 'name')
     object_name.text = objName
     pose = etree.SubElement(object, 'pose')
-    pose.text = 'HikPolygonRoiParameter'
+    pose.text = 'Parameter'
     truncated = etree.SubElement(object, 'truncated')
     truncated.text = '0'
     difficult = etree.SubElement(object, 'difficult')
